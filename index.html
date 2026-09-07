@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Comptoir — Gestion bar-restaurant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#15191A;
+  --surface:#1E2422;
+  --surface-2:#262E2B;
+  --line:#37403C;
+  --line-soft:#2A322F;
+  --text:#F2EFE7;
+  --text-dim:#A9B0AB;
+  --text-faint:#767F79;
+  --amber:#CB8A3E;
+  --amber-dim:#3A2F1C;
+  --green:#5FA778;
+  --green-dim:#1E3327;
+  --red:#CD5A45;
+  --red-dim:#3B211C;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{font-family:'Fraunces',serif;font-weight:500;}
+#app{max-width:520px;margin:0 auto;padding:16px 16px 90px;}
+
+header.topbar{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:8px 2px 20px;
+}
+header.topbar .brand{display:flex;align-items:center;gap:8px;font-family:'Fraunces',serif;font-size:20px;font-weight:600;letter-spacing:0.5px;}
+header.topbar .brand svg{width:26px;height:26px;flex-shrink:0;}
+header.topbar .clock{font-size:13px;color:var(--text-faint);}
+
+nav.tabs{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);
+  border-top:1px solid var(--line);
+  display:flex;
+  max-width:520px;margin:0 auto;
+  z-index:20;
+}
+nav.tabs button{
+  flex:1;background:none;border:none;color:var(--text-faint);
+  font-family:'Inter',sans-serif;font-size:11px;padding:11px 4px 9px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+nav.tabs button.active{color:var(--amber);}
+nav.tabs button .dot{width:5px;height:5px;border-radius:50%;background:transparent;}
+nav.tabs button.active .dot{background:var(--amber);}
+
+.view{display:none;}
+.view.active{display:block;}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--line-soft);
+  border-radius:var(--radius);
+  padding:14px 16px;
+}
+.section-title{
+  font-size:12px;color:var(--text-faint);
+  text-transform:none;letter-spacing:0.2px;
+  margin:22px 2px 10px;
+}
+.section-title:first-child{margin-top:0;}
+
+/* Comptes list */
+.compte-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:13px 14px;border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--line-soft);
+  margin-bottom:8px;cursor:pointer;
+}
+.compte-row.closed{opacity:0.55;}
+.compte-row .id{font-size:15px;font-weight:500;}
+.compte-row .meta{font-size:12px;color:var(--text-faint);margin-top:2px;}
+.compte-row .amount{font-size:15px;font-weight:500;text-align:right;}
+.badge{font-size:11px;padding:3px 9px;border-radius:20px;display:inline-block;margin-top:3px;}
+.badge.open{background:var(--green-dim);color:var(--green);}
+.badge.closed{background:var(--surface-2);color:var(--text-faint);}
+
+.btn-primary{
+  width:100%;background:var(--amber);color:#1B1409;border:none;
+  height:46px;border-radius:var(--radius);font-size:14px;font-weight:600;
+  font-family:'Inter',sans-serif;cursor:pointer;
+}
+.btn-secondary{
+  width:100%;background:none;color:var(--text);border:1px solid var(--line);
+  height:44px;border-radius:var(--radius);font-size:14px;font-weight:500;
+  font-family:'Inter',sans-serif;cursor:pointer;
+}
+.btn-danger-outline{
+  background:none;color:var(--red);border:1px solid var(--red);
+  border-radius:var(--radius);font-size:13px;font-weight:500;
+  padding:9px 14px;cursor:pointer;font-family:'Inter',sans-serif;
+}
+
+/* Compte detail */
+.compte-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.compte-header .back{color:var(--text-faint);font-size:13px;background:none;border:none;cursor:pointer;margin-bottom:8px;display:block;}
+.compte-header .id-big{font-size:19px;font-weight:600;}
+.compte-header .meta{font-size:12px;color:var(--text-faint);margin-top:2px;}
+
+.cat-tabs{display:flex;gap:6px;margin-bottom:12px;}
+.cat-tabs button{
+  flex:1;height:34px;border-radius:var(--radius);border:1px solid var(--line);
+  background:none;color:var(--text-dim);font-size:12px;font-family:'Inter',sans-serif;
+  cursor:pointer;
+}
+.cat-tabs button.active{background:var(--amber);color:#1B1409;border-color:var(--amber);font-weight:600;}
+
+.subcat-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.subcat-tabs button{
+  height:28px;padding:0 12px;border-radius:20px;border:1px solid var(--line);
+  background:none;color:var(--text-faint);font-size:11px;font-family:'Inter',sans-serif;
+  cursor:pointer;
+}
+.subcat-tabs button.active{background:var(--surface-2);color:var(--text);border-color:var(--text-faint);}
+
+.search-input{
+  width:100%;height:38px;border-radius:var(--radius);border:1px solid var(--line);
+  background:var(--surface-2);color:var(--text);font-size:13px;padding:0 12px;
+  font-family:'Inter',sans-serif;margin-bottom:12px;
+}
+.search-input::placeholder{color:var(--text-faint);}
+
+.produit-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+.produit-tile{
+  background:var(--surface-2);border-radius:var(--radius);padding:11px 10px;
+  text-align:center;cursor:pointer;border:1px solid transparent;
+}
+.produit-tile:active{border-color:var(--amber);}
+.produit-tile .nom{font-size:13px;font-weight:500;}
+.produit-tile .prix{font-size:12px;color:var(--text-dim);margin-top:2px;}
+.produit-tile .stock{font-size:11px;color:var(--text-faint);margin-top:3px;}
+.produit-tile.rupture{background:var(--red-dim);}
+.produit-tile.rupture .nom,.produit-tile.rupture .prix,.produit-tile.rupture .stock{color:var(--red);}
+.produit-tile.alerte .stock{color:var(--amber);}
+
+.historique-line{
+  display:flex;justify-content:space-between;font-size:13px;padding:5px 0;
+  border-bottom:1px solid var(--line-soft);
+}
+.historique-line:last-child{border-bottom:none;}
+.historique-line .h-time{color:var(--text-faint);margin-right:6px;}
+
+.total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid var(--line);padding-top:12px;margin-top:12px;
+}
+.total-row .label{font-size:13px;color:var(--text-dim);}
+.total-row .value{font-size:22px;font-weight:600;font-family:'Fraunces',serif;}
+
+.action-row{display:flex;gap:8px;margin-top:14px;}
+
+/* Produits & stock */
+.produit-line{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--line-soft);
+}
+.produit-line:last-child{border-bottom:none;}
+.produit-line .p-nom{font-size:14px;font-weight:500;}
+.produit-line .p-cat{font-size:11px;color:var(--text-faint);}
+.produit-line .p-right{text-align:right;}
+.produit-line .p-prix{font-size:13px;color:var(--text-dim);}
+.produit-line .p-stock{font-size:12px;margin-top:2px;}
+.produit-line .p-stock.ok{color:var(--text-faint);}
+.produit-line .p-stock.warn{color:var(--amber);}
+.produit-line .p-stock.bad{color:var(--red);}
+.stock-btns{display:flex;gap:4px;margin-top:6px;}
+.stock-btns button{
+  background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+  width:26px;height:26px;border-radius:6px;font-size:14px;cursor:pointer;
+}
+
+/* Dépenses */
+.depense-line{
+  display:flex;justify-content:space-between;font-size:13px;
+  padding:9px 0;border-bottom:1px solid var(--line-soft);
+}
+.depense-line:last-child{border-bottom:none;}
+
+/* Dashboard */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat-card{background:var(--surface-2);border-radius:var(--radius);padding:13px;}
+.stat-card .label{font-size:12px;color:var(--text-dim);}
+.stat-card .value{font-size:19px;font-weight:600;margin-top:4px;font-family:'Fraunces',serif;}
+.benef-card{
+  background:var(--green-dim);border-radius:var(--radius);padding:13px 15px;
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;
+}
+.benef-card .label{font-size:13px;color:var(--green);font-weight:500;}
+.benef-card .value{font-size:17px;color:var(--green);font-weight:600;}
+.alert-line{
+  display:flex;justify-content:space-between;align-items:center;
+  border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;
+}
+.alert-line.bad{background:var(--red-dim);color:var(--red);}
+.alert-line.warn{background:var(--amber-dim);color:var(--amber);}
+.alert-line .a-nom{font-size:13px;}
+.alert-line .a-stock{font-size:12px;}
+
+/* Modal */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  display:none;align-items:flex-end;justify-content:center;z-index:50;
+}
+.overlay.active{display:flex;}
+.sheet{
+  background:var(--surface);width:100%;max-width:520px;
+  border-radius:16px 16px 0 0;padding:20px 18px 26px;
+}
+.sheet h3{font-size:16px;margin-bottom:14px;}
+.field{margin-bottom:12px;}
+.field label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:5px;}
+.field input,.field select{
+  width:100%;height:40px;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface-2);color:var(--text);font-size:14px;padding:0 12px;
+  font-family:'Inter',sans-serif;
+}
+.field .error{color:var(--red);font-size:12px;margin-top:5px;}
+.sheet-actions{display:flex;gap:8px;margin-top:16px;}
+.empty{text-align:center;color:var(--text-faint);font-size:13px;padding:30px 0;}
+
+/* Facture */
+.facture-box{background:var(--surface-2);border-radius:var(--radius);padding:16px;font-size:13px;}
+.facture-box .f-header{text-align:center;margin-bottom:14px;}
+.facture-box .f-header .f-brand{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
+.facture-box .f-header .f-sub{font-size:11px;color:var(--text-faint);margin-top:2px;}
+.facture-box .f-line{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line);}
+.facture-box .f-total{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-weight:600;font-size:15px;}
+.sync-status{font-size:11px;color:var(--text-faint);text-align:center;padding:6px 0 2px;}
+
+@media print{
+  body *{visibility:hidden;}
+  #print-area, #print-area *{visibility:visible;}
+  #print-area{position:absolute;top:0;left:0;width:100%;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<div id="print-area"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ---------- Connexion Supabase ----------
+const SUPABASE_URL = 'https://rshkmeqcdvbglefidimk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_KMWv9ruk_hY798h24Kzw_g_PQEBnRqp';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const NUMERO_BILAN = '22890493144'; // Togo (+228) 90493144
+
+// ---------- Données (chargées depuis Supabase) ----------
+let produits = [];
+let comptes = [];
+let depenses = [];
+let chargementEnCours = true;
+let etatSync = 'Connexion...';
+
+let state = { tab:'comptes', compteOuvertId:null, catActive:'boisson', subCatActive:'toutes', recherche:'' };
+
+// ---------- Mapping DB <-> app ----------
+function heureFr(iso){ return new Date(iso).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+function produitFromRow(r){ return {id:r.id, nom:r.nom, categorie:r.categorie, sousCategorie:r.sous_categorie, prix:Number(r.prix), stock:r.stock, seuil:r.seuil}; }
+function depenseFromRow(r){ return {id:r.id, libelle:r.libelle, montant:Number(r.montant), heure:heureFr(r.heure)}; }
+
+async function chargerDonnees(){
+  const [{data:prodRows, error:e1}, {data:compteRows, error:e2}, {data:ligneRows, error:e3}, {data:depRows, error:e4}] = await Promise.all([
+    sb.from('produits').select('*').order('nom'),
+    sb.from('comptes').select('*').order('ouvert_le', {ascending:false}),
+    sb.from('lignes_achat').select('*').order('heure'),
+    sb.from('depenses').select('*').order('heure'),
+  ]);
+  if(e1||e2||e3||e4){
+    etatSync = 'Erreur de connexion à la base — vérifie ta connexion internet';
+    chargementEnCours = false;
+    render();
+    return;
+  }
+  produits = (prodRows||[]).map(produitFromRow);
+  comptes = (compteRows||[]).map(cr=>({
+    id:cr.id, statut:cr.statut,
+    ouvertLe:heureFr(cr.ouvert_le), clotureLe: cr.cloture_le?heureFr(cr.cloture_le):null,
+    lignes:(ligneRows||[]).filter(l=>l.compte_id===cr.id).map(l=>({produitId:l.produit_id, nom:l.nom, prix:Number(l.prix), qte:l.qte, heure:heureFr(l.heure)})),
+  }));
+  depenses = (depRows||[]).map(depenseFromRow);
+  chargementEnCours = false;
+  etatSync = 'Synchronisé';
+  render();
+}
+
+function initRealtime(){
+  sb.channel('godope-sync')
+    .on('postgres_changes', {event:'*', schema:'public', table:'produits'}, ()=>chargerDonnees())
+    .on('postgres_changes', {event:'*', schema:'public', table:'comptes'}, ()=>chargerDonnees())
+    .on('postgres_changes', {event:'*', schema:'public', table:'lignes_achat'}, ()=>chargerDonnees())
+    .on('postgres_changes', {event:'*', schema:'public', table:'depenses'}, ()=>chargerDonnees())
+    .subscribe();
+}
+
+function nextClientId(){
+  let max = 233;
+  comptes.forEach(c=>{ const m = c.id.match(/^Client(\d+)$/); if(m){ const n=parseInt(m[1],10); if(n>max) max=n; } });
+  return 'Client'+(max+1);
+}
+
+// ---------- Utils ----------
+function fmt(n){ return n.toLocaleString('fr-FR') + ' F'; }
+function totalCompte(c){ return c.lignes.reduce((s,l)=>s+l.prix*l.qte,0); }
+function totalVentesJour(){
+  return comptes.filter(c=>c.statut==='cloture').reduce((s,c)=>s+totalCompte(c),0);
+}
+function totalDepensesJour(){ return depenses.reduce((s,d)=>s+d.montant,0); }
+function stockClass(p){
+  if(p.stock<=0) return 'bad';
+  if(p.stock<=p.seuil) return 'warn';
+  return 'ok';
+}
+function closeSheet(){ document.getElementById('overlay').classList.remove('active'); }
+function openSheet(html){
+  document.getElementById('sheet').innerHTML = html;
+  document.getElementById('overlay').classList.add('active');
+}
+
+// ---------- Rendu principal ----------
+function render(){
+  const app = document.getElementById('app');
+  if(chargementEnCours){
+    app.innerHTML = `<div class="empty" style="padding-top:80px;">Chargement des données...</div>`;
+    return;
+  }
+  app.innerHTML = `
+    <header class="topbar">
+      <div class="brand">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="#CB8A3E" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            <path d="M 150 110 L 165 195 Q 168 210 183 210 L 217 210 Q 232 210 235 195 L 250 110 Z"/>
+            <line x1="200" y1="210" x2="200" y2="245"/>
+            <line x1="172" y1="245" x2="228" y2="245"/>
+          </g>
+        </svg>
+        GODOPE
+      </div>
+      <div class="clock">${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>
+    </header>
+    <div class="sync-status">${etatSync}</div>
+    <div id="viewport"></div>
+    <nav class="tabs">
+      ${tabBtn('comptes','Comptes')}
+      ${tabBtn('produits','Produits')}
+      ${tabBtn('depenses','Dépenses')}
+      ${tabBtn('dashboard','Tableau de bord')}
+    </nav>
+  `;
+  renderViewport();
+  attachTabEvents();
+}
+
+function tabBtn(key,label){
+  return `<button data-tab="${key}" class="${state.tab===key?'active':''}">
+    <span class="dot"></span>${label}
+  </button>`;
+}
+function attachTabEvents(){
+  document.querySelectorAll('nav.tabs button').forEach(b=>{
+    b.onclick = ()=>{ state.tab=b.dataset.tab; state.compteOuvertId=null; render(); };
+  });
+}
+
+function renderViewport(){
+  const vp = document.getElementById('viewport');
+  if(state.compteOuvertId){ vp.innerHTML = viewCompteDetail(); attachCompteDetailEvents(); return; }
+  if(state.tab==='comptes'){ vp.innerHTML = viewComptes(); attachComptesEvents(); }
+  else if(state.tab==='produits'){ vp.innerHTML = viewProduits(); attachProduitsEvents(); }
+  else if(state.tab==='depenses'){ vp.innerHTML = viewDepenses(); attachDepensesEvents(); }
+  else if(state.tab==='dashboard'){ vp.innerHTML = viewDashboard(); attachDashboardEvents(); }
+}
+
+// ---------- Vue Comptes ----------
+function viewComptes(){
+  const ouverts = comptes.filter(c=>c.statut==='ouvert');
+  const clotures = comptes.filter(c=>c.statut==='cloture');
+  let html = `<div class="section-title">Comptes en cours · ${ouverts.length}</div>`;
+  html += ouverts.length ? ouverts.map(c=>compteRowHtml(c)).join('') : `<div class="empty">Aucun compte ouvert</div>`;
+  html += `<div class="section-title">Encaissés aujourd'hui</div>`;
+  html += clotures.length ? clotures.map(c=>compteRowHtml(c)).join('') : `<div class="empty">Aucun encaissement</div>`;
+  html += `<div style="margin-top:18px;"><button class="btn-primary" id="btn-nouveau-client">+ Nouveau client</button></div>`;
+  return html;
+}
+function compteRowHtml(c){
+  return `<div class="compte-row ${c.statut==='cloture'?'closed':''}" data-id="${c.id}">
+    <div>
+      <div class="id">${c.id}</div>
+      <div class="meta">${c.statut==='ouvert' ? 'Ouvert depuis '+c.ouvertLe+' · '+c.lignes.length+' article(s)' : 'Clôturé à '+c.clotureLe}</div>
+    </div>
+    <div>
+      <div class="amount">${fmt(totalCompte(c))}</div>
+      <span class="badge ${c.statut==='ouvert'?'open':'closed'}">${c.statut==='ouvert'?'En cours':'Encaissé'}</span>
+    </div>
+  </div>`;
+}
+function attachComptesEvents(){
+  document.querySelectorAll('.compte-row').forEach(r=>{
+    r.onclick = ()=>{ state.compteOuvertId=r.dataset.id; state.catActive='boisson'; renderViewport(); };
+  });
+  const btnNouveau = document.getElementById('btn-nouveau-client');
+  if(btnNouveau) btnNouveau.onclick = async ()=>{
+    const id = nextClientId();
+    btnNouveau.disabled = true;
+    const {error} = await sb.from('comptes').insert({id, statut:'ouvert'});
+    btnNouveau.disabled = false;
+    if(error){ alert('Erreur : '+error.message); return; }
+    comptes.unshift({id, statut:'ouvert', ouvertLe:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}), clotureLe:null, lignes:[]});
+    state.compteOuvertId = id; state.catActive='boisson';
+    renderViewport();
+  };
+}
+
+// ---------- Vue détail compte ----------
+function viewCompteDetail(){
+  const c = comptes.find(x=>x.id===state.compteOuvertId);
+  if(!c){ state.compteOuvertId=null; return viewComptes(); }
+  const cats = [['boisson','Boissons'],['plat','Plats'],['dessert','Desserts']];
+  const subCats = [['toutes','Toutes'],['biere','Bières'],['canette','Canettes'],['jus','Jus'],['vin','Vins'],['whisky','Whisky'],['carton','Cartons'],['autre','Autres']];
+  let prodsCat = produits.filter(p=>p.categorie===state.catActive);
+  if(state.catActive==='boisson' && state.subCatActive!=='toutes'){
+    prodsCat = prodsCat.filter(p=>p.sousCategorie===state.subCatActive);
+  }
+  if(state.recherche.trim()){
+    const q = state.recherche.trim().toLowerCase();
+    prodsCat = prodsCat.filter(p=>p.nom.toLowerCase().includes(q));
+  }
+  const total = totalCompte(c);
+  return `
+    <button class="back" id="btn-back">← Comptes</button>
+    <div class="compte-header">
+      <div>
+        <div class="id-big">${c.id}</div>
+        <div class="meta">${c.statut==='ouvert' ? 'Ouvert depuis '+c.ouvertLe : 'Clôturé à '+c.clotureLe}</div>
+      </div>
+      <span class="badge ${c.statut==='ouvert'?'open':'closed'}">${c.statut==='ouvert'?'En cours':'Encaissé'}</span>
+    </div>
+    ${c.statut==='ouvert' ? `
+    <div class="cat-tabs">
+      ${cats.map(([k,l])=>`<button data-cat="${k}" class="${state.catActive===k?'active':''}">${l}</button>`).join('')}
+    </div>
+    ${state.catActive==='boisson' ? `
+    <div class="subcat-tabs">
+      ${subCats.map(([k,l])=>`<button data-subcat="${k}" class="${state.subCatActive===k?'active':''}">${l}</button>`).join('')}
+    </div>` : ''}
+    <input type="text" class="search-input" id="produit-search" placeholder="Rechercher un produit..." value="${state.recherche}">
+    <div class="produit-grid">
+      ${prodsCat.map(p=>{
+        const suiviStock = p.categorie==='boisson';
+        const cls = suiviStock ? (p.stock<=0?'rupture':(p.stock<=p.seuil?'alerte':'')) : '';
+        return `<div class="produit-tile ${cls}" data-pid="${p.id}">
+          <div class="nom">${p.nom}</div>
+          <div class="prix">${fmt(p.prix)}</div>
+          ${suiviStock ? `<div class="stock">${p.stock<=0?'Rupture':'Stock : '+p.stock}</div>` : ''}
+        </div>`;
+      }).join('')}
+      ${prodsCat.length===0 ? `<div class="empty" style="grid-column:1/-1;">Aucun produit trouvé</div>` : ''}
+      <div class="produit-tile" id="tile-ajouter-produit" style="border:1px dashed var(--line);color:var(--text-faint);display:flex;align-items:center;justify-content:center;">+ Ajouter</div>
+    </div>` : ''}
+    <div class="section-title" style="margin-top:0;">Historique du compte</div>
+    <div class="card">
+      ${c.lignes.length ? c.lignes.map(l=>`
+        <div class="historique-line">
+          <span><span class="h-time">${l.heure}</span>${l.qte}x ${l.nom}</span>
+          <span>${fmt(l.prix*l.qte)}</span>
+        </div>`).join('') : `<div class="empty">Aucun article pour le moment</div>`}
+      <div class="total-row">
+        <span class="label">Total ${c.statut==='ouvert'?'en cours':'payé'}</span>
+        <span class="value">${fmt(total)}</span>
+      </div>
+    </div>
+    <div class="action-row">
+      ${c.statut==='ouvert' ? `
+      <button class="btn-secondary" style="flex:1;" id="btn-facture">Facture</button>
+      <button class="btn-primary" style="flex:2;" id="btn-cloturer">Clôturer et encaisser</button>
+      ` : `
+      <button class="btn-secondary" style="flex:1;" id="btn-facture">Voir / imprimer la facture</button>
+      `}
+    </div>
+  `;
+}
+function attachCompteDetailEvents(){
+  document.getElementById('btn-back').onclick = ()=>{ state.compteOuvertId=null; renderViewport(); };
+  document.querySelectorAll('.cat-tabs button').forEach(b=>{
+    b.onclick = ()=>{ state.catActive=b.dataset.cat; state.subCatActive='toutes'; state.recherche=''; renderViewport(); };
+  });
+  document.querySelectorAll('.subcat-tabs button').forEach(b=>{
+    b.onclick = ()=>{ state.subCatActive=b.dataset.subcat; renderViewport(); };
+  });
+  const searchInput = document.getElementById('produit-search');
+  if(searchInput){
+    searchInput.oninput = ()=>{ state.recherche = searchInput.value; renderViewport(); searchInput.focus(); searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length); };
+  }
+  document.querySelectorAll('.produit-tile[data-pid]').forEach(t=>{
+    t.onclick = async ()=>{
+      const c = comptes.find(x=>x.id===state.compteOuvertId);
+      const p = produits.find(x=>x.id===t.dataset.pid);
+      if(!p) return;
+      const suiviStock = p.categorie==='boisson';
+      if(suiviStock && p.stock<=0) return;
+      const heureIso = new Date().toISOString();
+      const {error} = await sb.from('lignes_achat').insert({compte_id:c.id, produit_id:p.id, nom:p.nom, prix:p.prix, qte:1, heure:heureIso});
+      if(error){ alert('Erreur : '+error.message); return; }
+      c.lignes.push({produitId:p.id, nom:p.nom, prix:p.prix, qte:1, heure:heureFr(heureIso)});
+      if(suiviStock){
+        p.stock -= 1;
+        await sb.from('produits').update({stock:p.stock}).eq('id', p.id);
+      }
+      renderViewport();
+    };
+  });
+  const tileAjouter = document.getElementById('tile-ajouter-produit');
+  if(tileAjouter) tileAjouter.onclick = ()=> openAjouterProduitSheet(state.catActive, ()=>renderViewport());
+  const btnCloturer = document.getElementById('btn-cloturer');
+  if(btnCloturer) btnCloturer.onclick = async ()=>{
+    const c = comptes.find(x=>x.id===state.compteOuvertId);
+    if(c.lignes.length===0){ alert('Ajoute au moins un article avant de clôturer.'); return; }
+    btnCloturer.disabled = true;
+    const clotureIso = new Date().toISOString();
+    const {error} = await sb.from('comptes').update({statut:'cloture', cloture_le:clotureIso}).eq('id', c.id);
+    btnCloturer.disabled = false;
+    if(error){ alert('Erreur : '+error.message); return; }
+    c.statut='cloture';
+    c.clotureLe = heureFr(clotureIso);
+    state.compteOuvertId=null;
+    renderViewport();
+  };
+  const btnFacture = document.getElementById('btn-facture');
+  if(btnFacture) btnFacture.onclick = ()=> ouvrirFacture(state.compteOuvertId);
+}
+
+// ---------- Facture ----------
+function ouvrirFacture(compteId){
+  const c = comptes.find(x=>x.id===compteId);
+  if(!c) return;
+  const total = totalCompte(c);
+  const dateJour = new Date().toLocaleDateString('fr-FR');
+  const html = `
+    <div class="facture-box">
+      <div class="f-header">
+        <div class="f-brand">GODOPE</div>
+        <div class="f-sub">Bar • Restaurant</div>
+        <div class="f-sub">${dateJour} — ${c.id}</div>
+      </div>
+      ${c.lignes.map(l=>`
+        <div class="f-line"><span>${l.qte}x ${l.nom}</span><span>${fmt(l.prix*l.qte)}</span></div>
+      `).join('')}
+      <div class="f-total"><span>Total</span><span>${fmt(total)}</span></div>
+    </div>
+  `;
+  openSheet(`
+    <h3>Facture — ${c.id}</h3>
+    ${html}
+    <div class="sheet-actions">
+      <button class="btn-secondary" style="flex:1;" id="fact-fermer">Fermer</button>
+      <button class="btn-primary" style="flex:1;" id="fact-imprimer">Imprimer</button>
+    </div>
+  `);
+  document.getElementById('fact-fermer').onclick = closeSheet;
+  document.getElementById('fact-imprimer').onclick = ()=>{
+    document.getElementById('print-area').innerHTML = html;
+    window.print();
+  };
+}
+
+// ---------- Formulaire Ajouter un produit ----------
+function openAjouterProduitSheet(categorieDefaut, onDone){
+  const catLabel = {boisson:'Boisson', plat:'Plat', dessert:'Dessert'};
+  openSheet(`
+    <h3>Nouveau produit</h3>
+    <div class="field">
+      <label>Catégorie</label>
+      <select id="np-cat">
+        <option value="boisson" ${categorieDefaut==='boisson'?'selected':''}>Boisson</option>
+        <option value="plat" ${categorieDefaut==='plat'?'selected':''}>Plat</option>
+        <option value="dessert" ${categorieDefaut==='dessert'?'selected':''}>Dessert</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Nom</label>
+      <input type="text" id="np-nom" placeholder="Ex : Bière 65cl (grande bouteille)">
+      <div class="error" id="np-err-nom" style="display:none;">Indique un nom.</div>
+    </div>
+    <div class="field">
+      <label>Prix (F)</label>
+      <input type="number" id="np-prix" placeholder="Ex : 2500" min="0">
+      <div class="error" id="np-err-prix" style="display:none;">Indique un prix valide.</div>
+    </div>
+    <div id="np-stock-fields">
+      <div class="field">
+        <label>Type de boisson</label>
+        <select id="np-souscat">
+          <option value="biere">Bière</option>
+          <option value="canette">Canette</option>
+          <option value="jus">Jus naturel</option>
+          <option value="vin">Vin</option>
+          <option value="whisky">Whisky</option>
+          <option value="carton">Petit carton (ex : Sangria Forte)</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Stock de départ</label>
+        <input type="number" id="np-stock" placeholder="Ex : 20" min="0">
+      </div>
+      <div class="field">
+        <label>Seuil d'alerte</label>
+        <input type="number" id="np-seuil" placeholder="Ex : 8" min="0">
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-secondary" style="flex:1;" id="np-cancel">Annuler</button>
+      <button class="btn-primary" style="flex:1;" id="np-save">Ajouter</button>
+    </div>
+  `);
+  const catSelect = document.getElementById('np-cat');
+  const stockFields = document.getElementById('np-stock-fields');
+  const toggleStockFields = ()=>{ stockFields.style.display = catSelect.value==='boisson' ? 'block' : 'none'; };
+  toggleStockFields();
+  catSelect.onchange = toggleStockFields;
+  document.getElementById('np-cancel').onclick = closeSheet;
+  document.getElementById('np-save').onclick = async ()=>{
+    const categorie = catSelect.value;
+    const nom = document.getElementById('np-nom').value.trim();
+    const prix = parseFloat(document.getElementById('np-prix').value);
+    document.getElementById('np-err-nom').style.display = nom ? 'none' : 'block';
+    document.getElementById('np-err-prix').style.display = (prix>0) ? 'none' : 'block';
+    if(!nom || !(prix>0)) return;
+    const insertObj = {nom, categorie, prix};
+    if(categorie==='boisson'){
+      const stock = parseInt(document.getElementById('np-stock').value,10);
+      const seuil = parseInt(document.getElementById('np-seuil').value,10);
+      insertObj.stock = isNaN(stock) ? 0 : stock;
+      insertObj.seuil = isNaN(seuil) ? 5 : seuil;
+      insertObj.sous_categorie = document.getElementById('np-souscat').value;
+    }
+    const {data, error} = await sb.from('produits').insert(insertObj).select().single();
+    if(error){ alert('Erreur : '+error.message); return; }
+    produits.push(produitFromRow(data));
+    closeSheet();
+    if(onDone) onDone();
+  };
+}
+
+// ---------- Vue Produits & stock ----------
+function viewProduits(){
+  const cats = [['boisson','Boissons'],['plat','Plats'],['dessert','Desserts']];
+  let html = '';
+  cats.forEach(([k,label])=>{
+    const list = produits.filter(p=>p.categorie===k);
+    const suiviStock = k==='boisson';
+    html += `<div class="section-title">${label}</div><div class="card">`;
+    html += list.map(p=>`
+      <div class="produit-line">
+        <div>
+          <div class="p-nom">${p.nom}</div>
+          ${suiviStock ? `<div class="p-cat">Seuil d'alerte : ${p.seuil}</div>` : ''}
+        </div>
+        <div class="p-right">
+          <div class="p-prix">${fmt(p.prix)}</div>
+          ${suiviStock ? `
+          <div class="p-stock ${stockClass(p)}">${p.stock<=0?'Rupture':'Stock : '+p.stock}</div>
+          <div class="stock-btns">
+            <button data-pid="${p.id}" data-delta="-1">−</button>
+            <button data-pid="${p.id}" data-delta="1">+</button>
+          </div>` : ''}
+        </div>
+      </div>`).join('');
+    if(list.length===0) html += `<div class="empty">Aucun produit</div>`;
+    html += `</div><div style="margin:8px 0 4px;"><button class="btn-secondary" data-addcat="${k}">+ Ajouter en ${label.toLowerCase()}</button></div>`;
+  });
+  return html;
+}
+function attachProduitsEvents(){
+  document.querySelectorAll('.stock-btns button').forEach(b=>{
+    b.onclick = async ()=>{
+      const p = produits.find(x=>x.id===b.dataset.pid);
+      const delta = parseInt(b.dataset.delta,10);
+      const newStock = Math.max(0, p.stock+delta);
+      const {error} = await sb.from('produits').update({stock:newStock}).eq('id', p.id);
+      if(error){ alert('Erreur : '+error.message); return; }
+      p.stock = newStock;
+      renderViewport();
+    };
+  });
+  document.querySelectorAll('[data-addcat]').forEach(b=>{
+    b.onclick = ()=> openAjouterProduitSheet(b.dataset.addcat, ()=>renderViewport());
+  });
+}
+
+// ---------- Vue Dépenses ----------
+function viewDepenses(){
+  return `
+    <div class="section-title">Dépenses du jour</div>
+    <div class="card">
+      ${depenses.length ? depenses.map(d=>`
+        <div class="depense-line">
+          <span>${d.heure} — ${d.libelle}</span>
+          <span>${fmt(d.montant)}</span>
+        </div>`).join('') : `<div class="empty">Aucune dépense enregistrée</div>`}
+      <div class="total-row">
+        <span class="label">Total dépenses</span>
+        <span class="value">${fmt(totalDepensesJour())}</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn-primary" id="btn-ajouter-depense">+ Ajouter une dépense</button>
+    </div>
+  `;
+}
+function attachDepensesEvents(){
+  document.getElementById('btn-ajouter-depense').onclick = ()=>{
+    openSheet(`
+      <h3>Nouvelle dépense</h3>
+      <div class="field">
+        <label>Libellé</label>
+        <input type="text" id="dep-libelle" placeholder="Ex : Achat glaçons">
+        <div class="error" id="err-libelle" style="display:none;">Indique un libellé.</div>
+      </div>
+      <div class="field">
+        <label>Montant (F)</label>
+        <input type="number" id="dep-montant" placeholder="Ex : 2000" min="0">
+        <div class="error" id="err-montant" style="display:none;">Indique un montant valide.</div>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn-secondary" style="flex:1;" id="dep-cancel">Annuler</button>
+        <button class="btn-primary" style="flex:1;" id="dep-save">Enregistrer</button>
+      </div>
+    `);
+    document.getElementById('dep-cancel').onclick = closeSheet;
+    document.getElementById('dep-save').onclick = async ()=>{
+      const libelle = document.getElementById('dep-libelle').value.trim();
+      const montant = parseFloat(document.getElementById('dep-montant').value);
+      document.getElementById('err-libelle').style.display = libelle ? 'none' : 'block';
+      document.getElementById('err-montant').style.display = (montant>0) ? 'none' : 'block';
+      if(!libelle || !(montant>0)) return;
+      const heureIso = new Date().toISOString();
+      const {data, error} = await sb.from('depenses').insert({libelle, montant, heure:heureIso}).select().single();
+      if(error){ alert('Erreur : '+error.message); return; }
+      depenses.push(depenseFromRow(data));
+      closeSheet();
+      renderViewport();
+    };
+  };
+}
+
+// ---------- Vue Dashboard ----------
+function viewDashboard(){
+  const ventes = totalVentesJour();
+  const dep = totalDepensesJour();
+  const benef = ventes - dep;
+  const alertes = produits.filter(p=>p.categorie==='boisson' && p.stock<=p.seuil);
+  return `
+    <div class="section-title" style="margin-top:0;">Aujourd'hui</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">Ventes du jour</div><div class="value">${fmt(ventes)}</div></div>
+      <div class="stat-card"><div class="label">Dépenses du jour</div><div class="value">${fmt(dep)}</div></div>
+    </div>
+    <div class="benef-card">
+      <span class="label">Bénéfice net du jour</span>
+      <span class="value">${fmt(benef)}</span>
+    </div>
+    <div class="section-title">Alertes stock</div>
+    ${alertes.length ? alertes.map(p=>`
+      <div class="alert-line ${p.stock<=0?'bad':'warn'}">
+        <span class="a-nom">${p.nom}</span>
+        <span class="a-stock">${p.stock<=0?'Rupture':p.stock+' restant(es)'}</span>
+      </div>`).join('') : `<div class="empty">Aucune alerte, tout va bien</div>`}
+    <div style="margin-top:18px;">
+      <button class="btn-primary" id="btn-envoyer-bilan">Envoyer le bilan du jour (WhatsApp)</button>
+    </div>
+  `;
+}
+function attachDashboardEvents(){
+  const btn = document.getElementById('btn-envoyer-bilan');
+  if(!btn) return;
+  btn.onclick = ()=>{
+    const ventes = totalVentesJour();
+    const dep = totalDepensesJour();
+    const benef = ventes - dep;
+    const alertes = produits.filter(p=>p.categorie==='boisson' && p.stock<=p.seuil);
+    const dateJour = new Date().toLocaleDateString('fr-FR');
+    let texte = `*GODOPE — Bilan du ${dateJour}*\n\n`;
+    texte += `Ventes du jour : ${fmt(ventes)}\n`;
+    texte += `Dépenses du jour : ${fmt(dep)}\n`;
+    texte += `Bénéfice net : ${fmt(benef)}\n`;
+    if(alertes.length){
+      texte += `\nAlertes stock :\n`;
+      alertes.forEach(p=>{ texte += `- ${p.nom} : ${p.stock<=0?'rupture':p.stock+' restant(es)'}\n`; });
+    }
+    const url = `https://wa.me/${NUMERO_BILAN}?text=${encodeURIComponent(texte)}`;
+    window.open(url, '_blank');
+  };
+}
+
+chargerDonnees();
+initRealtime();
+</script>
+</body>
+</html>
