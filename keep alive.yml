@@ -1,0 +1,20 @@
+name: Keep Supabase Active
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # Tous les jours à 12h
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          curl -X GET \
+            "https://vcjpiukxonultiahspma.supabase.co/rest/v1/demandes?limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}"
+      
+      - name: Log
+        run: echo "✅ Supabase keep-alive executed"
